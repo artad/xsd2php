@@ -2,6 +2,7 @@
 namespace GoetasWebservices\Xsd\XsdToPhp\Php;
 
 use Doctrine\Common\Inflector\Inflector;
+use GoetasWebservices\Xsd\XsdToPhp\Php\DocBlock\Tag\VarTag;
 use GoetasWebservices\Xsd\XsdToPhp\Php\Structure\PHPClass;
 use GoetasWebservices\Xsd\XsdToPhp\Php\Structure\PHPClassOf;
 use GoetasWebservices\Xsd\XsdToPhp\Php\Structure\PHPProperty;
@@ -51,11 +52,21 @@ class ClassGenerator
         ]);
     }
 
+    /**
+     * @param null $shortDescription
+     * @param null $longDescription
+     * @param array $tags
+     * @return DocBlockGenerator
+     */
+    private function createDocBlockGenerator($shortDescription = null, $longDescription = null, array $tags = []) {
+        return (new DocBlockGenerator($shortDescription, $longDescription, $tags))->setWordWrap(false);
+    }
+
     private function handleValueMethod(Generator\ClassGenerator $generator, PHPProperty $prop, PHPClass $class, $all = true)
     {
         $type = $prop->getType();
 
-        $docblock = new DocBlockGenerator('Construct');
+        $docblock = $this->createDocBlockGenerator('Construct');
         $paramTag = new ParamTag("value", "mixed");
         $paramTag->setTypes(($type ? $type->getPhpType() : "mixed"));
 
@@ -73,7 +84,7 @@ class ClassGenerator
 
         $generator->addMethodFromGenerator($method);
 
-        $docblock = new DocBlockGenerator('Gets or sets the inner value');
+        $docblock = $this->createDocBlockGenerator('Gets or sets the inner value');
         $paramTag = new ParamTag("value", "mixed");
         if ($type && $type instanceof PHPClassOf) {
             $paramTag->setTypes($type->getArg()->getType()->getPhpType() . "[]");
@@ -108,7 +119,7 @@ class ClassGenerator
 
         $generator->addMethodFromGenerator($method);
 
-        $docblock = new DocBlockGenerator('Gets a string value');
+        $docblock = $this->createDocBlockGenerator('Gets a string value');
         $docblock->setTag(new ReturnTag("string"));
         $method = new MethodGenerator("__toString");
         $method->setDocBlock($docblock);
@@ -119,7 +130,7 @@ class ClassGenerator
     private function handleSetter(Generator\ClassGenerator $generator, PHPProperty $prop, PHPClass $class)
     {
         $methodBody = '';
-        $docblock = new DocBlockGenerator();
+        $docblock = $this->createDocBlockGenerator();
 
         $docblock->setShortDescription("Sets a new " . $prop->getName());
 
@@ -182,7 +193,7 @@ class ClassGenerator
     {
 
         if ($prop->getType() instanceof PHPClassOf) {
-            $docblock = new DocBlockGenerator();
+            $docblock = $this->createDocBlockGenerator();
             $docblock->setShortDescription("isset " . $prop->getName());
             if ($prop->getDoc()) {
                 $docblock->setLongDescription($prop->getDoc());
@@ -200,7 +211,7 @@ class ClassGenerator
             $method->setBody("return isset(\$this->" . $prop->getName() . "[\$index]);");
             $generator->addMethodFromGenerator($method);
 
-            $docblock = new DocBlockGenerator();
+            $docblock = $this->createDocBlockGenerator();
             $docblock->setShortDescription("unset " . $prop->getName());
             if ($prop->getDoc()) {
                 $docblock->setLongDescription($prop->getDoc());
@@ -220,7 +231,7 @@ class ClassGenerator
         }
         // ////
 
-        $docblock = new DocBlockGenerator();
+        $docblock = $this->createDocBlockGenerator();
 
         $docblock->setShortDescription("Gets as " . $prop->getName());
 
@@ -263,7 +274,7 @@ class ClassGenerator
         $type = $prop->getType();
         $propName = $type->getArg()->getName();
 
-        $docblock = new DocBlockGenerator();
+        $docblock = $this->createDocBlockGenerator();
         $docblock->setShortDescription("Adds as $propName");
 
         if ($prop->getDoc()) {
@@ -327,13 +338,13 @@ class ClassGenerator
             // $generatedProp->setDefaultValue(array(), PropertyValueGenerator::TYPE_AUTO, PropertyValueGenerator::OUTPUT_SINGLE_LINE);
         }
 
-        $docBlock = new DocBlockGenerator();
+        $docBlock = $this->createDocBlockGenerator();
         $generatedProp->setDocBlock($docBlock);
 
         if ($prop->getDoc()) {
             $docBlock->setLongDescription($prop->getDoc());
         }
-        $tag = new PropertyTag($prop->getName(), 'mixed');
+        $tag = new VarTag($prop->getName(), 'mixed');
 
         $type = $prop->getType();
 
@@ -362,7 +373,7 @@ class ClassGenerator
     public function generate(PHPClass $type)
     {
         $class = new \Zend\Code\Generator\ClassGenerator();
-        $docblock = new DocBlockGenerator("Class representing " . $type->getName());
+        $docblock = $this->createDocBlockGenerator("Class representing " . $type->getName());
         if ($type->getDoc()) {
             $docblock->setLongDescription($type->getDoc());
         }
